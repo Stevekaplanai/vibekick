@@ -1,0 +1,18 @@
+{
+  "name": "vibekick",
+  "version": "1.0.0",
+  "description": "VibeKick - Your Vibe Coding Sidekick",
+  "author": "Steve Kaplan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stevekaplan/vibekick"
+  },
+  "keywords": [
+    "vibe-coding",
+    "prompts",
+    "chrome-extension",
+    "ai",
+    "developer-tools"
+  ]
+}

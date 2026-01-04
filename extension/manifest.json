@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "VibeKick - Your Vibe Coding Sidekick",
+  "version": "1.0.0",
+  "description": "Quick prompts for vibe coding. Search, customize, copy.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "storage",
+    "clipboardWrite"
+  ],
+  "host_permissions": [],
+  "author": "Steve Kaplan"
+}
