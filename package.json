@@ -14,5 +14,8 @@
     "chrome-extension",
     "ai",
     "developer-tools"
-  ]
+  ],
+  "devDependencies": {
+    "canvas": "^3.2.0"
+  }
 }
