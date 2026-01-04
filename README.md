@@ -9,7 +9,8 @@ A Chrome extension that provides quick, customizable prompts for vibe coding.
 - **Quick Search** - Find the right prompt in seconds
 - **Fill-in-the-Blank Editor** - Customize prompts with your context
 - **One-Click Copy** - Paste directly into any LLM
-- **Categorized Prompts** - Feature, Debug, Refactor, Test, Explain
+- **Categorized Prompts** - Feature, Debug, Refactor, Test, Explain, API, Database, UI, DevOps, AI
+- **100+ Prompts** - Curated prompts for every vibe coding scenario
 
 ## Installation (Development)
 
@@ -22,13 +23,16 @@ A Chrome extension that provides quick, customizable prompts for vibe coding.
 
 ```
 vibekick.co/
-├── extension/
+├── extension/           # Chrome extension
 │   ├── manifest.json    # Chrome extension manifest
 │   ├── popup.html       # Extension popup UI
 │   ├── styles.css       # Styling
-│   ├── prompts.js       # Prompt library
-│   ├── app.js           # Main application logic
-│   └── icons/           # Extension icons
+│   ├── prompts.js       # 100+ prompt library
+│   └── app.js           # Main application logic
+├── site/                # Landing page
+│   ├── index.html       # Landing page
+│   ├── styles.css       # Landing page styles
+│   └── vercel.json      # Vercel config
 ├── docs/
 │   └── product-brief.md # Product requirements
 └── README.md
