@@ -1,6 +1,6 @@
 /**
- * VibeKick - Auto-Enhance Your Prompts with Gamification!
- * Type anything → Get a better prompt → Power up → Copy → Celebrate!
+ * VibeKick - AI-Powered Prompt Enhancement
+ * Type anything → AI enhances it → Power up → Copy → Celebrate!
  */
 
 class VibeKick {
@@ -8,12 +8,14 @@ class VibeKick {
     this.powerLevel = 0;
     this.maxPower = 5;
     this.copiedCount = 0;
+    this.apiKey = null;
     this.init();
   }
 
-  init() {
+  async init() {
     this.bindElements();
     this.bindEvents();
+    await this.loadApiKey();
   }
 
   bindElements() {
@@ -28,6 +30,12 @@ class VibeKick {
     this.achievement = document.getElementById('achievement');
     this.achievementText = document.getElementById('achievement-text');
     this.confettiContainer = document.getElementById('confetti-container');
+    this.settingsBtn = document.getElementById('settings-btn');
+    this.settingsPanel = document.getElementById('settings-panel');
+    this.closeSettings = document.getElementById('close-settings');
+    this.apiKeyInput = document.getElementById('api-key');
+    this.saveSettingsBtn = document.getElementById('save-settings');
+    this.loading = document.getElementById('loading');
   }
 
   bindEvents() {
@@ -37,7 +45,7 @@ class VibeKick {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         this.resetPower();
-        this.autoEnhance();
+        this.localEnhance();
       }, 300);
     });
 
@@ -46,16 +54,17 @@ class VibeKick {
       if (e.target.classList.contains('chip')) {
         this.inputText.value = e.target.dataset.prompt;
         this.resetPower();
-        this.autoEnhance();
+        this.localEnhance();
         this.inputText.focus();
       }
     });
 
-    // Enhance buttons
+    // AI Enhance button - calls LLM
     this.enhanceInputBtn.addEventListener('click', () => {
-      this.enhanceInput();
+      this.aiEnhance();
     });
 
+    // Power Up button - calls LLM
     this.enhanceOutputBtn.addEventListener('click', () => {
       this.powerUp();
     });
@@ -64,158 +73,236 @@ class VibeKick {
     this.copyBtn.addEventListener('click', () => {
       this.copyPrompt();
     });
+
+    // Settings
+    this.settingsBtn.addEventListener('click', () => {
+      this.settingsPanel.classList.toggle('hidden');
+    });
+
+    this.closeSettings.addEventListener('click', () => {
+      this.settingsPanel.classList.add('hidden');
+    });
+
+    this.saveSettingsBtn.addEventListener('click', () => {
+      this.saveApiKey();
+    });
   }
 
-  detectIntent(text) {
-    const lower = text.toLowerCase();
-
-    if (/\b(fix|bug|error|issue|broken|not working|crash|fail|debug)\b/.test(lower)) {
-      return 'debug';
+  async loadApiKey() {
+    try {
+      const result = await chrome.storage.local.get(['openai_api_key']);
+      if (result.openai_api_key) {
+        this.apiKey = result.openai_api_key;
+        this.apiKeyInput.value = '••••••••••••••••';
+      }
+    } catch (e) {
+      console.log('Storage not available, using local storage');
+      this.apiKey = localStorage.getItem('openai_api_key');
+      if (this.apiKey) {
+        this.apiKeyInput.value = '••••••••••••••••';
+      }
     }
-    if (/\b(explain|what is|what does|how does|why|understand|mean)\b/.test(lower)) {
-      return 'explain';
-    }
-    if (/\b(create|build|make|add|implement|new|generate|write)\b/.test(lower)) {
-      return 'create';
-    }
-    if (/\b(refactor|improve|optimize|clean|better|simplify|update)\b/.test(lower)) {
-      return 'refactor';
-    }
-    if (/\b(test|spec|coverage|unit test|e2e|integration)\b/.test(lower)) {
-      return 'test';
-    }
-    if (/\b(review|check|analyze|evaluate|audit)\b/.test(lower)) {
-      return 'review';
-    }
-
-    return 'general';
   }
 
-  autoEnhance() {
+  async saveApiKey() {
+    const key = this.apiKeyInput.value.trim();
+    if (!key || key === '••••••••••••••••') {
+      this.showAchievement("⚠️", "Enter a valid API key");
+      return;
+    }
+
+    this.apiKey = key;
+
+    try {
+      await chrome.storage.local.set({ openai_api_key: key });
+    } catch (e) {
+      localStorage.setItem('openai_api_key', key);
+    }
+
+    this.apiKeyInput.value = '••••••••••••••••';
+    this.settingsPanel.classList.add('hidden');
+    this.showAchievement("✅", "API key saved!");
+  }
+
+  // Local enhancement (no API, instant)
+  localEnhance() {
     const input = this.inputText.value.trim();
-
     if (!input) {
       this.outputText.value = '';
       return;
     }
 
     const intent = this.detectIntent(input);
-    let enhanced = this.generateEnhancedPrompt(input, intent);
-
+    const enhanced = this.generateLocalPrompt(input, intent);
     this.outputText.value = enhanced;
     this.addPower(1);
   }
 
-  generateEnhancedPrompt(input, intent) {
-    const enhancements = {
-      debug: {
-        prefix: "I need help debugging this issue: ",
-        suffix: "\n\nPlease:\n1. Identify the root cause\n2. Explain why this is happening\n3. Provide a working fix\n4. Suggest how to prevent this in the future"
-      },
-      explain: {
-        prefix: "Please explain this clearly: ",
-        suffix: "\n\nProvide:\n1. A simple explanation\n2. A practical example\n3. Common use cases or gotchas"
-      },
-      create: {
-        prefix: "Help me build this: ",
-        suffix: "\n\nInclude:\n1. Complete, working code\n2. Brief explanation of the approach\n3. Any important considerations"
-      },
-      refactor: {
-        prefix: "Help me improve this code: ",
-        suffix: "\n\nFocus on:\n1. Readability and maintainability\n2. Performance if applicable\n3. Best practices\n\nExplain each change you make."
-      },
-      test: {
-        prefix: "Write tests for this: ",
-        suffix: "\n\nInclude:\n1. Happy path tests\n2. Edge cases\n3. Error scenarios\n\nUse descriptive test names."
-      },
-      review: {
-        prefix: "Review this code: ",
-        suffix: "\n\nCheck for:\n1. Bugs or potential issues\n2. Performance concerns\n3. Best practice violations\n4. Security issues\n\nProvide specific suggestions."
-      },
-      general: {
-        prefix: "",
-        suffix: "\n\nProvide a complete solution with clear explanations."
-      }
+  detectIntent(text) {
+    const lower = text.toLowerCase();
+    if (/\b(fix|bug|error|issue|broken|not working|crash|fail|debug)\b/.test(lower)) return 'debug';
+    if (/\b(explain|what is|what does|how does|why|understand|mean)\b/.test(lower)) return 'explain';
+    if (/\b(create|build|make|add|implement|new|generate|write)\b/.test(lower)) return 'create';
+    if (/\b(refactor|improve|optimize|clean|better|simplify|update)\b/.test(lower)) return 'refactor';
+    if (/\b(test|spec|coverage|unit test|e2e|integration)\b/.test(lower)) return 'test';
+    if (/\b(review|check|analyze|evaluate|audit)\b/.test(lower)) return 'review';
+    return 'general';
+  }
+
+  generateLocalPrompt(input, intent) {
+    const templates = {
+      debug: `I need help debugging: ${input}\n\nPlease identify the root cause and provide a fix.`,
+      explain: `Please explain: ${input}\n\nProvide a clear explanation with examples.`,
+      create: `Help me build: ${input}\n\nInclude complete, working code.`,
+      refactor: `Help me improve: ${input}\n\nFocus on readability and best practices.`,
+      test: `Write tests for: ${input}\n\nInclude edge cases and error scenarios.`,
+      review: `Review this: ${input}\n\nCheck for bugs, performance, and best practices.`,
+      general: `${input}\n\nProvide a complete solution with explanations.`
     };
-
-    const e = enhancements[intent];
-
-    let cleanInput = input;
-    if (cleanInput.length > 0 && cleanInput[0] === cleanInput[0].toLowerCase()) {
-      cleanInput = cleanInput.charAt(0).toUpperCase() + cleanInput.slice(1);
-    }
-
-    if (!/[.!?]$/.test(cleanInput)) {
-      cleanInput += '.';
-    }
-
-    return e.prefix + cleanInput + e.suffix;
+    return templates[intent];
   }
 
-  enhanceInput() {
+  // AI Enhancement - calls OpenAI API
+  async aiEnhance() {
     const input = this.inputText.value.trim();
-    if (!input) return;
-
-    const expansions = [
-      { pattern: /\bfix\b/gi, replacement: "fix and debug" },
-      { pattern: /\berror\b/gi, replacement: "error/exception" },
-      { pattern: /\bcreate\b/gi, replacement: "create and implement" },
-      { pattern: /\badd\b/gi, replacement: "add and integrate" },
-      { pattern: /\btest\b/gi, replacement: "write comprehensive tests for" },
-      { pattern: /\bexplain\b/gi, replacement: "explain in detail" },
-      { pattern: /\bimprove\b/gi, replacement: "improve and optimize" },
-    ];
-
-    let enhanced = input;
-    expansions.forEach(({ pattern, replacement }) => {
-      enhanced = enhanced.replace(pattern, replacement);
-    });
-
-    if (enhanced.split(' ').length < 5) {
-      enhanced += " (include all relevant code and context)";
-    }
-
-    this.inputText.value = enhanced;
-    this.autoEnhance();
-    this.showMiniConfetti();
-  }
-
-  powerUp() {
-    if (this.powerLevel >= this.maxPower) {
-      this.showAchievement("🔥 MAX POWER!", "You're at maximum power!");
+    if (!input) {
+      this.showAchievement("⚠️", "Type something first!");
       return;
     }
 
-    const current = this.outputText.value.trim();
-    if (!current) return;
+    if (!this.apiKey) {
+      this.settingsPanel.classList.remove('hidden');
+      this.showAchievement("🔑", "Add your OpenAI API key");
+      return;
+    }
 
-    const powerUps = [
-      "\n\nAdditional requirements:\n- Follow best practices and conventions\n- Handle edge cases appropriately\n- Include error handling",
-      "\n\n- Use modern syntax and patterns\n- Make the code production-ready\n- Consider performance implications",
-      "\n\n- Add helpful comments for complex logic\n- Ensure the solution is maintainable\n- Consider accessibility if applicable",
-      "\n\n- Include TypeScript types if applicable\n- Follow SOLID principles\n- Write clean, self-documenting code",
-      "\n\n- Consider security implications\n- Add input validation\n- Handle all error states gracefully"
+    this.showLoading(true);
+
+    try {
+      const enhanced = await this.callOpenAI(
+        `You are an expert prompt engineer. Take this rough idea and transform it into a detailed, effective prompt that will get the best results from an AI coding assistant.
+
+User's rough idea: "${input}"
+
+Create a comprehensive prompt that:
+1. Clearly states the goal
+2. Provides necessary context
+3. Specifies desired output format
+4. Includes any important constraints or requirements
+
+Return ONLY the enhanced prompt, no explanations.`,
+        300
+      );
+
+      this.outputText.value = enhanced;
+      this.addPower(2);
+      this.showMiniConfetti();
+      this.showAchievement("✨", "AI Enhanced!");
+
+    } catch (error) {
+      this.showAchievement("❌", error.message);
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
+  // Power Up - adds more detail via AI
+  async powerUp() {
+    const current = this.outputText.value.trim();
+    if (!current) {
+      this.showAchievement("⚠️", "Enhance first!");
+      return;
+    }
+
+    if (this.powerLevel >= this.maxPower) {
+      this.showAchievement("🔥", "MAX POWER!");
+      this.launchConfetti();
+      return;
+    }
+
+    if (!this.apiKey) {
+      this.settingsPanel.classList.remove('hidden');
+      this.showAchievement("🔑", "Add your OpenAI API key");
+      return;
+    }
+
+    this.showLoading(true);
+
+    const powerUpPrompts = [
+      "Add specific requirements for error handling and edge cases.",
+      "Add requirements for code quality: types, documentation, and best practices.",
+      "Add performance considerations and optimization requirements.",
+      "Add security requirements and input validation needs.",
+      "Add testing requirements and acceptance criteria."
     ];
 
-    const powerIndex = this.powerLevel;
-    if (powerIndex < powerUps.length) {
-      this.outputText.value = current + powerUps[powerIndex];
+    try {
+      const powerPrompt = powerUpPrompts[this.powerLevel] || powerUpPrompts[0];
+
+      const enhanced = await this.callOpenAI(
+        `You are an expert prompt engineer. Take this prompt and make it more powerful by adding more specific requirements.
+
+Current prompt:
+"${current}"
+
+Enhancement focus: ${powerPrompt}
+
+Return the enhanced prompt with the new requirements seamlessly integrated. Return ONLY the enhanced prompt.`,
+        500
+      );
+
+      this.outputText.value = enhanced;
       this.addPower(1);
       this.outputText.classList.add('powered-up');
-
-      // Shake effect
       this.outputText.classList.add('shake');
       setTimeout(() => this.outputText.classList.remove('shake'), 300);
-
-      // Mini celebration
       this.showMiniConfetti();
 
       if (this.powerLevel >= this.maxPower) {
         this.enhanceOutputBtn.textContent = '🔥 MAX POWER!';
         this.enhanceOutputBtn.classList.add('maxed');
-        this.showAchievement("⚡ SUPERCHARGED!", "Maximum power reached!");
+        this.showAchievement("⚡", "SUPERCHARGED!");
         this.launchConfetti();
+      } else {
+        this.showAchievement("🚀", `Power Level ${this.powerLevel}!`);
       }
+
+    } catch (error) {
+      this.showAchievement("❌", error.message);
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
+  async callOpenAI(prompt, maxTokens = 300) {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: maxTokens,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'API request failed');
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
+  }
+
+  showLoading(show) {
+    if (show) {
+      this.loading.classList.remove('hidden');
+    } else {
+      this.loading.classList.add('hidden');
     }
   }
 
@@ -252,27 +339,24 @@ class VibeKick {
       await navigator.clipboard.writeText(text);
       this.copiedCount++;
 
-      // Success animation
       this.copyBtn.classList.add('success');
       this.copyBtn.textContent = '✓ Copied!';
 
-      // Celebration based on power level
       if (this.powerLevel >= this.maxPower) {
         this.launchConfetti();
-        this.showAchievement("🏆 LEGENDARY!", "Max power prompt copied!");
+        this.showAchievement("🏆", "LEGENDARY prompt copied!");
       } else if (this.powerLevel >= 3) {
         this.launchConfetti();
-        this.showAchievement("🎯 NICE!", "Powered-up prompt copied!");
+        this.showAchievement("🎯", "Powered-up prompt copied!");
       } else {
         this.showMiniConfetti();
-        this.showAchievement("✅ COPIED!", "Ready to paste!");
+        this.showAchievement("✅", "Ready to paste!");
       }
 
-      // Milestone achievements
       if (this.copiedCount === 5) {
-        setTimeout(() => this.showAchievement("🌟 FIVE STAR!", "5 prompts copied!"), 1500);
+        setTimeout(() => this.showAchievement("🌟", "5 prompts copied!"), 1500);
       } else if (this.copiedCount === 10) {
-        setTimeout(() => this.showAchievement("🚀 POWER USER!", "10 prompts copied!"), 1500);
+        setTimeout(() => this.showAchievement("🚀", "POWER USER!"), 1500);
       }
 
       setTimeout(() => {
@@ -281,7 +365,6 @@ class VibeKick {
       }, 2000);
 
     } catch (err) {
-      console.error('Failed to copy:', err);
       this.copyBtn.textContent = '❌ Failed';
       setTimeout(() => {
         this.copyBtn.textContent = '📋 Copy Prompt';
@@ -302,9 +385,7 @@ class VibeKick {
 
   launchConfetti() {
     const colors = ['#00d4ff', '#00ff88', '#ff00ff', '#ffff00', '#ff6600'];
-    const confettiCount = 50;
-
-    for (let i = 0; i < confettiCount; i++) {
+    for (let i = 0; i < 50; i++) {
       setTimeout(() => {
         this.createConfettiPiece(colors[Math.floor(Math.random() * colors.length)]);
       }, i * 20);
@@ -327,9 +408,7 @@ class VibeKick {
     confetti.style.backgroundColor = color;
     confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
     confetti.style.animationDuration = `${2 + Math.random() * 2}s`;
-
     this.confettiContainer.appendChild(confetti);
-
     setTimeout(() => confetti.remove(), 4000);
   }
 }

@@ -13,63 +13,88 @@
     <!-- Header with Power Level -->
     <header class="header">
       <h1>⚡ VibeKick</h1>
-      <div class="power-meter">
-        <span class="power-label">Power</span>
-        <div class="power-bar">
-          <div class="power-fill" id="power-fill"></div>
+      <div class="header-right">
+        <div class="power-meter">
+          <span class="power-label">Power</span>
+          <div class="power-bar">
+            <div class="power-fill" id="power-fill"></div>
+          </div>
+          <span class="power-level" id="power-level">0</span>
         </div>
-        <span class="power-level" id="power-level">0</span>
+        <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
       </div>
     </header>
 
-    <!-- Input Section -->
-    <div class="section">
-      <div class="section-header">
-        <label for="input-text">What do you need?</label>
-        <button class="enhance-btn" id="enhance-input-btn">✨ Enhance</button>
+    <!-- Settings Panel (hidden by default) -->
+    <div class="settings-panel hidden" id="settings-panel">
+      <div class="settings-header">
+        <span>API Settings</span>
+        <button class="close-btn" id="close-settings">✕</button>
       </div>
-      <textarea
-        id="input-text"
-        placeholder="Type anything... e.g., 'fix my login'"
-        rows="2"
-      ></textarea>
-
-      <!-- Quick Suggestions -->
-      <div class="suggestions" id="suggestions">
-        <button class="chip" data-prompt="fix this error">🐛 Fix error</button>
-        <button class="chip" data-prompt="add authentication">🔐 Add auth</button>
-        <button class="chip" data-prompt="create a component">🧩 Component</button>
-        <button class="chip" data-prompt="add dark mode">🌙 Dark mode</button>
-        <button class="chip" data-prompt="write tests">🧪 Tests</button>
-        <button class="chip" data-prompt="explain this code">📖 Explain</button>
-        <button class="chip" data-prompt="optimize performance">⚡ Optimize</button>
-        <button class="chip" data-prompt="add form validation">✅ Validation</button>
+      <div class="settings-content">
+        <label for="api-key">OpenAI API Key</label>
+        <input type="password" id="api-key" placeholder="sk-..." />
+        <p class="settings-hint">Required for AI-powered enhancement. Your key is stored locally.</p>
+        <button class="save-btn" id="save-settings">Save Key</button>
       </div>
     </div>
 
-    <!-- Output Section -->
-    <div class="section">
-      <div class="section-header">
-        <label for="output-text">Enhanced Prompt</label>
-        <button class="enhance-btn" id="enhance-output-btn">🚀 Power Up!</button>
-      </div>
-      <textarea
-        id="output-text"
-        placeholder="Your enhanced prompt will appear here..."
-        rows="5"
-        readonly
-      ></textarea>
-    </div>
+    <!-- Main Content -->
+    <div id="main-content">
+      <!-- Input Section -->
+      <div class="section">
+        <div class="section-header">
+          <label for="input-text">What do you need?</label>
+          <button class="enhance-btn" id="enhance-input-btn">✨ AI Enhance</button>
+        </div>
+        <textarea
+          id="input-text"
+          placeholder="Type anything... e.g., 'fix my login'"
+          rows="2"
+        ></textarea>
 
-    <!-- Copy Button -->
-    <button class="copy-btn" id="copy-btn">
-      📋 Copy Prompt
-    </button>
+        <!-- Quick Suggestions -->
+        <div class="suggestions" id="suggestions">
+          <button class="chip" data-prompt="fix this error">🐛 Fix error</button>
+          <button class="chip" data-prompt="add authentication">🔐 Add auth</button>
+          <button class="chip" data-prompt="create a component">🧩 Component</button>
+          <button class="chip" data-prompt="add dark mode">🌙 Dark mode</button>
+          <button class="chip" data-prompt="write tests">🧪 Tests</button>
+          <button class="chip" data-prompt="explain this code">📖 Explain</button>
+          <button class="chip" data-prompt="optimize performance">⚡ Optimize</button>
+          <button class="chip" data-prompt="add form validation">✅ Validation</button>
+        </div>
+      </div>
+
+      <!-- Output Section -->
+      <div class="section">
+        <div class="section-header">
+          <label for="output-text">Enhanced Prompt</label>
+          <button class="enhance-btn" id="enhance-output-btn">🚀 Power Up!</button>
+        </div>
+        <textarea
+          id="output-text"
+          placeholder="Your enhanced prompt will appear here..."
+          rows="5"
+        ></textarea>
+      </div>
+
+      <!-- Copy Button -->
+      <button class="copy-btn" id="copy-btn">
+        📋 Copy Prompt
+      </button>
+    </div>
 
     <!-- Achievement Toast -->
     <div class="achievement hidden" id="achievement">
       <span class="achievement-icon">🏆</span>
       <span class="achievement-text" id="achievement-text">Prompt Copied!</span>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loading">
+      <div class="loading-spinner"></div>
+      <span>Enhancing with AI...</span>
     </div>
   </div>
 

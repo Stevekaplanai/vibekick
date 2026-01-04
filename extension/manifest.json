@@ -20,6 +20,8 @@
     "storage",
     "clipboardWrite"
   ],
-  "host_permissions": [],
+  "host_permissions": [
+    "https://api.openai.com/*"
+  ],
   "author": "Steve Kaplan"
 }
