@@ -7,11 +7,19 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div id="confetti-container"></div>
+
   <div id="app">
-    <!-- Header -->
+    <!-- Header with Power Level -->
     <header class="header">
-      <h1>VibeKick</h1>
-      <span class="tagline">Auto-enhance your prompts</span>
+      <h1>⚡ VibeKick</h1>
+      <div class="power-meter">
+        <span class="power-label">Power</span>
+        <div class="power-bar">
+          <div class="power-fill" id="power-fill"></div>
+        </div>
+        <span class="power-level" id="power-level">0</span>
+      </div>
     </header>
 
     <!-- Input Section -->
@@ -22,21 +30,33 @@
       </div>
       <textarea
         id="input-text"
-        placeholder="Type anything... e.g., 'fix my login' or 'add dark mode'"
-        rows="3"
+        placeholder="Type anything... e.g., 'fix my login'"
+        rows="2"
       ></textarea>
+
+      <!-- Quick Suggestions -->
+      <div class="suggestions" id="suggestions">
+        <button class="chip" data-prompt="fix this error">🐛 Fix error</button>
+        <button class="chip" data-prompt="add authentication">🔐 Add auth</button>
+        <button class="chip" data-prompt="create a component">🧩 Component</button>
+        <button class="chip" data-prompt="add dark mode">🌙 Dark mode</button>
+        <button class="chip" data-prompt="write tests">🧪 Tests</button>
+        <button class="chip" data-prompt="explain this code">📖 Explain</button>
+        <button class="chip" data-prompt="optimize performance">⚡ Optimize</button>
+        <button class="chip" data-prompt="add form validation">✅ Validation</button>
+      </div>
     </div>
 
     <!-- Output Section -->
     <div class="section">
       <div class="section-header">
         <label for="output-text">Enhanced Prompt</label>
-        <button class="enhance-btn" id="enhance-output-btn">✨ Auto Enhance</button>
+        <button class="enhance-btn" id="enhance-output-btn">🚀 Power Up!</button>
       </div>
       <textarea
         id="output-text"
         placeholder="Your enhanced prompt will appear here..."
-        rows="6"
+        rows="5"
         readonly
       ></textarea>
     </div>
@@ -46,8 +66,10 @@
       📋 Copy Prompt
     </button>
 
-    <div class="copy-feedback hidden" id="copy-feedback">
-      ✓ Copied!
+    <!-- Achievement Toast -->
+    <div class="achievement hidden" id="achievement">
+      <span class="achievement-icon">🏆</span>
+      <span class="achievement-text" id="achievement-text">Prompt Copied!</span>
     </div>
   </div>
 
