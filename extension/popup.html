@@ -10,67 +10,47 @@
   <div id="app">
     <!-- Header -->
     <header class="header">
-      <h1>⚡ VibeKick</h1>
-      <span class="tagline">Your Vibe Coding Sidekick</span>
+      <h1>VibeKick</h1>
+      <span class="tagline">Auto-enhance your prompts</span>
     </header>
 
-    <!-- Search -->
-    <div class="search-container">
-      <input
-        type="text"
-        id="search"
-        placeholder="Search prompts..."
-        autocomplete="off"
-      />
+    <!-- Input Section -->
+    <div class="section">
+      <div class="section-header">
+        <label for="input-text">What do you need?</label>
+        <button class="enhance-btn" id="enhance-input-btn">✨ Enhance</button>
+      </div>
+      <textarea
+        id="input-text"
+        placeholder="Type anything... e.g., 'fix my login' or 'add dark mode'"
+        rows="3"
+      ></textarea>
     </div>
 
-    <!-- Categories -->
-    <div class="categories" id="categories">
-      <button class="category-btn active" data-category="all">All</button>
-      <button class="category-btn" data-category="feature">Feature</button>
-      <button class="category-btn" data-category="debug">Debug</button>
-      <button class="category-btn" data-category="refactor">Refactor</button>
-      <button class="category-btn" data-category="test">Test</button>
-      <button class="category-btn" data-category="explain">Explain</button>
-      <button class="category-btn" data-category="api">API</button>
-      <button class="category-btn" data-category="database">Database</button>
-      <button class="category-btn" data-category="ui">UI</button>
-      <button class="category-btn" data-category="devops">DevOps</button>
-      <button class="category-btn" data-category="ai">AI</button>
+    <!-- Output Section -->
+    <div class="section">
+      <div class="section-header">
+        <label for="output-text">Enhanced Prompt</label>
+        <button class="enhance-btn" id="enhance-output-btn">✨ Auto Enhance</button>
+      </div>
+      <textarea
+        id="output-text"
+        placeholder="Your enhanced prompt will appear here..."
+        rows="6"
+        readonly
+      ></textarea>
     </div>
 
-    <!-- Prompt List -->
-    <div class="prompt-list" id="prompt-list">
-      <!-- Prompts will be injected here -->
-    </div>
+    <!-- Copy Button -->
+    <button class="copy-btn" id="copy-btn">
+      📋 Copy Prompt
+    </button>
 
-    <!-- Prompt Editor (hidden by default) -->
-    <div class="prompt-editor hidden" id="prompt-editor">
-      <div class="editor-header">
-        <button class="back-btn" id="back-btn">← Back</button>
-        <h2 id="editor-title">Edit Prompt</h2>
-      </div>
-
-      <div class="editor-fields" id="editor-fields">
-        <!-- Fill-in-the-blank fields will be injected here -->
-      </div>
-
-      <div class="editor-preview">
-        <h3>Preview</h3>
-        <div class="preview-text" id="preview-text"></div>
-      </div>
-
-      <button class="copy-btn" id="copy-btn">
-        📋 Copy to Clipboard
-      </button>
-
-      <div class="copy-feedback hidden" id="copy-feedback">
-        ✓ Copied!
-      </div>
+    <div class="copy-feedback hidden" id="copy-feedback">
+      ✓ Copied!
     </div>
   </div>
 
-  <script src="prompts.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

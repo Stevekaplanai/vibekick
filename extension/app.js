@@ -1,210 +1,222 @@
 /**
- * VibeKick - Main Application Logic
- * Ultra-simple: Pick a prompt, optionally add context, copy.
+ * VibeKick - Auto-Enhance Your Prompts
+ * Type anything → Get a better prompt → Copy
  */
 
 class VibeKick {
   constructor() {
-    this.prompts = window.PROMPTS || [];
-    this.currentCategory = 'all';
-    this.currentPrompt = null;
-    this.context = '';
-
+    this.enhanceLevel = 0; // Track enhancement iterations
     this.init();
   }
 
   init() {
     this.bindElements();
     this.bindEvents();
-    this.renderPrompts();
   }
 
   bindElements() {
-    this.searchInput = document.getElementById('search');
-    this.categoriesContainer = document.getElementById('categories');
-    this.promptList = document.getElementById('prompt-list');
-    this.promptEditor = document.getElementById('prompt-editor');
-    this.editorTitle = document.getElementById('editor-title');
-    this.editorFields = document.getElementById('editor-fields');
-    this.previewText = document.getElementById('preview-text');
-    this.backBtn = document.getElementById('back-btn');
+    this.inputText = document.getElementById('input-text');
+    this.outputText = document.getElementById('output-text');
+    this.enhanceInputBtn = document.getElementById('enhance-input-btn');
+    this.enhanceOutputBtn = document.getElementById('enhance-output-btn');
     this.copyBtn = document.getElementById('copy-btn');
     this.copyFeedback = document.getElementById('copy-feedback');
   }
 
   bindEvents() {
-    this.searchInput.addEventListener('input', (e) => {
-      this.filterPrompts(e.target.value);
+    // Auto-enhance as user types (debounced)
+    let debounceTimer;
+    this.inputText.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        this.enhanceLevel = 0;
+        this.autoEnhance();
+      }, 300);
     });
 
-    this.categoriesContainer.addEventListener('click', (e) => {
-      if (e.target.classList.contains('category-btn')) {
-        this.setCategory(e.target.dataset.category);
-      }
+    // Enhance buttons
+    this.enhanceInputBtn.addEventListener('click', () => {
+      this.enhanceInput();
     });
 
-    this.backBtn.addEventListener('click', () => {
-      this.hideEditor();
+    this.enhanceOutputBtn.addEventListener('click', () => {
+      this.enhanceOutput();
     });
 
+    // Copy button
     this.copyBtn.addEventListener('click', () => {
       this.copyPrompt();
     });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !this.promptEditor.classList.contains('hidden')) {
-        this.hideEditor();
-      }
-    });
   }
 
-  setCategory(category) {
-    this.currentCategory = category;
+  detectIntent(text) {
+    const lower = text.toLowerCase();
 
-    const buttons = this.categoriesContainer.querySelectorAll('.category-btn');
-    buttons.forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.category === category);
-    });
+    // Debug/Fix patterns
+    if (/\b(fix|bug|error|issue|broken|not working|crash|fail|debug)\b/.test(lower)) {
+      return 'debug';
+    }
+    // Explain patterns
+    if (/\b(explain|what is|what does|how does|why|understand|mean)\b/.test(lower)) {
+      return 'explain';
+    }
+    // Create/Build patterns
+    if (/\b(create|build|make|add|implement|new|generate|write)\b/.test(lower)) {
+      return 'create';
+    }
+    // Refactor patterns
+    if (/\b(refactor|improve|optimize|clean|better|simplify|update)\b/.test(lower)) {
+      return 'refactor';
+    }
+    // Test patterns
+    if (/\b(test|spec|coverage|unit test|e2e|integration)\b/.test(lower)) {
+      return 'test';
+    }
+    // Review patterns
+    if (/\b(review|check|analyze|evaluate|audit)\b/.test(lower)) {
+      return 'review';
+    }
 
-    this.filterPrompts(this.searchInput.value);
+    return 'general';
   }
 
-  filterPrompts(searchTerm = '') {
-    const term = searchTerm.toLowerCase();
+  autoEnhance() {
+    const input = this.inputText.value.trim();
 
-    const filtered = this.prompts.filter(prompt => {
-      const matchesCategory = this.currentCategory === 'all' || prompt.category === this.currentCategory;
-      const matchesSearch = !term ||
-        prompt.title.toLowerCase().includes(term) ||
-        prompt.template.toLowerCase().includes(term) ||
-        prompt.category.toLowerCase().includes(term);
-
-      return matchesCategory && matchesSearch;
-    });
-
-    this.renderPrompts(filtered);
-  }
-
-  renderPrompts(prompts = this.prompts) {
-    if (prompts.length === 0) {
-      this.promptList.innerHTML = `
-        <div class="no-results">
-          <div class="no-results-icon">🔍</div>
-          <p>No prompts found</p>
-        </div>
-      `;
+    if (!input) {
+      this.outputText.value = '';
       return;
     }
 
-    this.promptList.innerHTML = prompts.map(prompt => `
-      <div class="prompt-card" data-id="${prompt.id}">
-        <div class="prompt-card-header">
-          <span class="prompt-card-title">${prompt.title}</span>
-          <span class="prompt-card-category">${prompt.category}</span>
-        </div>
-        <div class="prompt-card-preview">${this.getPreviewText(prompt.template)}</div>
-      </div>
-    `).join('');
+    const intent = this.detectIntent(input);
+    let enhanced = this.generateEnhancedPrompt(input, intent);
 
-    this.promptList.querySelectorAll('.prompt-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const prompt = this.prompts.find(p => p.id === card.dataset.id);
-        if (prompt) {
-          this.openEditor(prompt);
-        }
-      });
-    });
+    this.outputText.value = enhanced;
   }
 
-  getPreviewText(template) {
-    return template
-      .replace(/\n/g, ' ')
-      .substring(0, 80) + '...';
-  }
+  generateEnhancedPrompt(input, intent) {
+    const enhancements = {
+      debug: {
+        prefix: "I need help debugging this issue: ",
+        suffix: "\n\nPlease:\n1. Identify the root cause\n2. Explain why this is happening\n3. Provide a working fix\n4. Suggest how to prevent this in the future"
+      },
+      explain: {
+        prefix: "Please explain this clearly: ",
+        suffix: "\n\nProvide:\n1. A simple explanation\n2. A practical example\n3. Common use cases or gotchas"
+      },
+      create: {
+        prefix: "Help me build this: ",
+        suffix: "\n\nInclude:\n1. Complete, working code\n2. Brief explanation of the approach\n3. Any important considerations"
+      },
+      refactor: {
+        prefix: "Help me improve this code: ",
+        suffix: "\n\nFocus on:\n1. Readability and maintainability\n2. Performance if applicable\n3. Best practices\n\nExplain each change you make."
+      },
+      test: {
+        prefix: "Write tests for this: ",
+        suffix: "\n\nInclude:\n1. Happy path tests\n2. Edge cases\n3. Error scenarios\n\nUse descriptive test names."
+      },
+      review: {
+        prefix: "Review this code: ",
+        suffix: "\n\nCheck for:\n1. Bugs or potential issues\n2. Performance concerns\n3. Best practice violations\n4. Security issues\n\nProvide specific suggestions."
+      },
+      general: {
+        prefix: "",
+        suffix: "\n\nProvide a complete solution with clear explanations."
+      }
+    };
 
-  openEditor(prompt) {
-    this.currentPrompt = prompt;
-    this.context = '';
+    const e = enhancements[intent];
 
-    this.editorTitle.textContent = prompt.title;
-
-    // Single optional context box
-    this.editorFields.innerHTML = `
-      <div class="field-group">
-        <label class="field-label" for="context">
-          Add context <span class="optional">(optional)</span>
-        </label>
-        <textarea
-          class="field-input"
-          id="context"
-          placeholder="Paste code, error messages, or any relevant details..."
-          rows="4"
-        ></textarea>
-      </div>
-    `;
-
-    const contextInput = document.getElementById('context');
-    contextInput.addEventListener('input', (e) => {
-      this.context = e.target.value;
-      this.updatePreview();
-    });
-
-    this.updatePreview();
-
-    this.promptEditor.classList.remove('hidden');
-    this.copyFeedback.classList.add('hidden');
-  }
-
-  hideEditor() {
-    this.promptEditor.classList.add('hidden');
-    this.currentPrompt = null;
-    this.context = '';
-  }
-
-  updatePreview() {
-    if (!this.currentPrompt) return;
-
-    let preview = this.currentPrompt.template;
-
-    if (this.context.trim()) {
-      preview += '\n\n---\n\n' + this.context;
+    // Clean up input - capitalize first letter if needed
+    let cleanInput = input;
+    if (cleanInput.length > 0 && cleanInput[0] === cleanInput[0].toLowerCase()) {
+      cleanInput = cleanInput.charAt(0).toUpperCase() + cleanInput.slice(1);
     }
 
-    this.previewText.textContent = preview;
-  }
-
-  getFilledPrompt() {
-    if (!this.currentPrompt) return '';
-
-    let prompt = this.currentPrompt.template;
-
-    if (this.context.trim()) {
-      prompt += '\n\n---\n\n' + this.context;
+    // Add period if missing
+    if (!/[.!?]$/.test(cleanInput)) {
+      cleanInput += '.';
     }
 
-    return prompt;
+    return e.prefix + cleanInput + e.suffix;
+  }
+
+  enhanceInput() {
+    const input = this.inputText.value.trim();
+    if (!input) return;
+
+    // Make the input more specific/detailed
+    const expansions = [
+      { pattern: /\bfix\b/gi, replacement: "fix and debug" },
+      { pattern: /\berror\b/gi, replacement: "error/exception" },
+      { pattern: /\bcreate\b/gi, replacement: "create and implement" },
+      { pattern: /\badd\b/gi, replacement: "add and integrate" },
+      { pattern: /\btest\b/gi, replacement: "write comprehensive tests for" },
+      { pattern: /\bexplain\b/gi, replacement: "explain in detail" },
+      { pattern: /\bimprove\b/gi, replacement: "improve and optimize" },
+    ];
+
+    let enhanced = input;
+    expansions.forEach(({ pattern, replacement }) => {
+      enhanced = enhanced.replace(pattern, replacement);
+    });
+
+    // Add context hints if short
+    if (enhanced.split(' ').length < 5) {
+      enhanced += " (include all relevant code and context)";
+    }
+
+    this.inputText.value = enhanced;
+    this.autoEnhance();
+  }
+
+  enhanceOutput() {
+    this.enhanceLevel++;
+    const current = this.outputText.value.trim();
+    if (!current) return;
+
+    const additions = [
+      "\n\nAdditional requirements:\n- Follow best practices and conventions\n- Handle edge cases appropriately\n- Include error handling",
+      "\n\n- Use modern syntax and patterns\n- Make the code production-ready\n- Consider performance implications",
+      "\n\n- Add helpful comments for complex logic\n- Ensure the solution is maintainable\n- Consider accessibility if applicable",
+    ];
+
+    const additionIndex = Math.min(this.enhanceLevel - 1, additions.length - 1);
+
+    if (this.enhanceLevel <= additions.length) {
+      this.outputText.value = current + additions[additionIndex];
+    }
+
+    // Visual feedback that we've maxed out
+    if (this.enhanceLevel >= additions.length) {
+      this.enhanceOutputBtn.textContent = '✓ Fully Enhanced';
+      setTimeout(() => {
+        this.enhanceOutputBtn.textContent = '✨ Auto Enhance';
+      }, 1500);
+    }
   }
 
   async copyPrompt() {
-    const prompt = this.getFilledPrompt();
+    const text = this.outputText.value.trim();
+    if (!text) return;
 
     try {
-      await navigator.clipboard.writeText(prompt);
+      await navigator.clipboard.writeText(text);
 
       this.copyFeedback.classList.remove('hidden');
       this.copyBtn.textContent = '✓ Copied!';
 
       setTimeout(() => {
         this.copyFeedback.classList.add('hidden');
-        this.copyBtn.textContent = '📋 Copy to Clipboard';
+        this.copyBtn.textContent = '📋 Copy Prompt';
       }, 2000);
 
     } catch (err) {
       console.error('Failed to copy:', err);
-      this.copyBtn.textContent = '❌ Failed to copy';
-
+      this.copyBtn.textContent = '❌ Failed';
       setTimeout(() => {
-        this.copyBtn.textContent = '📋 Copy to Clipboard';
+        this.copyBtn.textContent = '📋 Copy Prompt';
       }, 2000);
     }
   }
