@@ -1,5 +1,6 @@
 /**
  * VibeKick - Main Application Logic
+ * Ultra-simple: Pick a prompt, optionally add context, copy.
  */
 
 class VibeKick {
@@ -7,7 +8,7 @@ class VibeKick {
     this.prompts = window.PROMPTS || [];
     this.currentCategory = 'all';
     this.currentPrompt = null;
-    this.fieldValues = {};
+    this.context = '';
 
     this.init();
   }
@@ -32,29 +33,24 @@ class VibeKick {
   }
 
   bindEvents() {
-    // Search
     this.searchInput.addEventListener('input', (e) => {
       this.filterPrompts(e.target.value);
     });
 
-    // Categories
     this.categoriesContainer.addEventListener('click', (e) => {
       if (e.target.classList.contains('category-btn')) {
         this.setCategory(e.target.dataset.category);
       }
     });
 
-    // Back button
     this.backBtn.addEventListener('click', () => {
       this.hideEditor();
     });
 
-    // Copy button
     this.copyBtn.addEventListener('click', () => {
       this.copyPrompt();
     });
 
-    // Keyboard shortcut: Escape to go back
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !this.promptEditor.classList.contains('hidden')) {
         this.hideEditor();
@@ -65,7 +61,6 @@ class VibeKick {
   setCategory(category) {
     this.currentCategory = category;
 
-    // Update button states
     const buttons = this.categoriesContainer.querySelectorAll('.category-btn');
     buttons.forEach(btn => {
       btn.classList.toggle('active', btn.dataset.category === category);
@@ -111,7 +106,6 @@ class VibeKick {
       </div>
     `).join('');
 
-    // Bind click events to cards
     this.promptList.querySelectorAll('.prompt-card').forEach(card => {
       card.addEventListener('click', () => {
         const prompt = this.prompts.find(p => p.id === card.dataset.id);
@@ -123,69 +117,48 @@ class VibeKick {
   }
 
   getPreviewText(template) {
-    // Replace placeholders with visual indicator and truncate
     return template
-      .replace(/\{\{(\w+)\}\}/g, '[$1]')
       .replace(/\n/g, ' ')
       .substring(0, 80) + '...';
   }
 
   openEditor(prompt) {
     this.currentPrompt = prompt;
-    this.fieldValues = {};
+    this.context = '';
 
-    // Set title
     this.editorTitle.textContent = prompt.title;
 
-    // Render fields
-    this.editorFields.innerHTML = prompt.fields.map(field => `
+    // Single optional context box
+    this.editorFields.innerHTML = `
       <div class="field-group">
-        <label class="field-label" for="field-${field.key}">${field.label}</label>
-        ${field.multiline
-          ? `<textarea
-              class="field-input"
-              id="field-${field.key}"
-              data-key="${field.key}"
-              placeholder="${field.placeholder || ''}"
-              rows="3"
-            ></textarea>`
-          : `<input
-              type="text"
-              class="field-input"
-              id="field-${field.key}"
-              data-key="${field.key}"
-              placeholder="${field.placeholder || ''}"
-            />`
-        }
+        <label class="field-label" for="context">
+          Add context <span class="optional">(optional)</span>
+        </label>
+        <textarea
+          class="field-input"
+          id="context"
+          placeholder="Paste code, error messages, or any relevant details..."
+          rows="4"
+        ></textarea>
       </div>
-    `).join('');
+    `;
 
-    // Bind input events for live preview
-    this.editorFields.querySelectorAll('.field-input').forEach(input => {
-      input.addEventListener('input', (e) => {
-        this.fieldValues[e.target.dataset.key] = e.target.value;
-        this.updatePreview();
-      });
+    const contextInput = document.getElementById('context');
+    contextInput.addEventListener('input', (e) => {
+      this.context = e.target.value;
+      this.updatePreview();
     });
 
-    // Initial preview
     this.updatePreview();
 
-    // Show editor
     this.promptEditor.classList.remove('hidden');
     this.copyFeedback.classList.add('hidden');
-
-    // Focus first field
-    const firstInput = this.editorFields.querySelector('.field-input');
-    if (firstInput) {
-      firstInput.focus();
-    }
   }
 
   hideEditor() {
     this.promptEditor.classList.add('hidden');
     this.currentPrompt = null;
-    this.fieldValues = {};
+    this.context = '';
   }
 
   updatePreview() {
@@ -193,20 +166,11 @@ class VibeKick {
 
     let preview = this.currentPrompt.template;
 
-    // Replace filled placeholders
-    for (const [key, value] of Object.entries(this.fieldValues)) {
-      if (value) {
-        preview = preview.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
-      }
+    if (this.context.trim()) {
+      preview += '\n\n---\n\n' + this.context;
     }
 
-    // Highlight unfilled placeholders
-    preview = preview.replace(
-      /\{\{(\w+)\}\}/g,
-      '<span class="placeholder">[$1]</span>'
-    );
-
-    this.previewText.innerHTML = preview;
+    this.previewText.textContent = preview;
   }
 
   getFilledPrompt() {
@@ -214,10 +178,8 @@ class VibeKick {
 
     let prompt = this.currentPrompt.template;
 
-    // Replace all placeholders with values or leave empty
-    for (const field of this.currentPrompt.fields) {
-      const value = this.fieldValues[field.key] || `[${field.label}]`;
-      prompt = prompt.replace(new RegExp(`\\{\\{${field.key}\\}\\}`, 'g'), value);
+    if (this.context.trim()) {
+      prompt += '\n\n---\n\n' + this.context;
     }
 
     return prompt;
@@ -229,11 +191,9 @@ class VibeKick {
     try {
       await navigator.clipboard.writeText(prompt);
 
-      // Show feedback
       this.copyFeedback.classList.remove('hidden');
       this.copyBtn.textContent = '✓ Copied!';
 
-      // Reset after delay
       setTimeout(() => {
         this.copyFeedback.classList.add('hidden');
         this.copyBtn.textContent = '📋 Copy to Clipboard';
@@ -250,7 +210,6 @@ class VibeKick {
   }
 }
 
-// Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   window.vibeKick = new VibeKick();
 });

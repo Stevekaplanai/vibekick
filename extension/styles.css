@@ -209,6 +209,11 @@ body {
   font-weight: 500;
 }
 
+.optional {
+  color: #666;
+  font-weight: 400;
+}
+
 .field-input {
   padding: 10px 12px;
   background: #0f0f1a;
